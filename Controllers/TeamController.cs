@@ -14,28 +14,32 @@ namespace EvaluationAPI.Controllers
             if (request.teamSizes.Any(x => x < 0)) return BadRequest("All teamSizes elements must be higher than 0.");
 
             //Copia de datos de la solicitud
-            int[] sizes = request.teamSizes;
-            int k = request.changes;
+            List<int> sizes = request.teamSizes.ToList<int>();
+            int changes = request.changes;
 
-            //Hallar la moda del arreglo
-            sizes = sizes.OrderBy(x => x).ToArray();
-            int mode = sizes.GroupBy(x => x)
-                        .OrderByDescending(x => x.Count())
-                        .Select(x => x.Key)
-                        .First();
-
-            //Cambio de elementos en el arreglo
-            for (int i = 1; k > 0; i++)
+            //Hallar la moda más óptima del arreglo
+            int mode;
+            List<int> modes = sizes.OrderBy(x => x)
+                                .GroupBy(x => x)
+                                .OrderByDescending(x => x.Count())
+                                .Select(x => x.Key).ToList();
+            while (true)
             {
-                if (sizes[sizes.Length - i] <= mode) break;
-                sizes[sizes.Length - i] = mode;
-                k--;
+                mode = modes.First();
+                modes.RemoveAt(0);
+                int avaliableChanges = sizes.Count(x => x > mode);
+                if (avaliableChanges >= changes) break;
+            } 
+
+            //Cambio de elementos en el arreglo     
+            while (changes > 0)
+            {
+                int max = sizes.Max();
+                sizes[sizes.FindIndex(x => x == max)] = mode;
+                changes--;
             }
-            //Print en consola del arreglo cambiado
-            Console.WriteLine(String.Join(",", sizes));
-            //Máximo de grupos cambiados
-            int count = sizes.Count(x => x == mode);
-            return Ok(count); 
+            
+            return Ok(sizes.ToArray()); 
         }
     }
 }
